@@ -47,6 +47,7 @@ from unyt.dimensions import (
     dimensionless,
     logarithmic,
     temperature,
+    currency,
 )
 from unyt.equivalencies import equivalence_registry
 from unyt.exceptions import (
@@ -343,6 +344,8 @@ class Unit:
             return "Δ°F"
         if unit_str == "dollars":
             return "$"
+        if unit_str == "euro":
+            return "€"
         # @todo: don't use dunder method?
         return unit_str
 

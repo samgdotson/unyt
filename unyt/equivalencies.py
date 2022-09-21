@@ -29,6 +29,7 @@ from unyt.dimensions import (
     spatial_frequency,
     temperature,
     velocity,
+    currency,
 )
 from unyt.exceptions import InvalidUnitEquivalence
 
@@ -508,3 +509,29 @@ class EffectiveTemperatureEquivalence(Equivalence):
 
     def __str__(self):
         return "effective_temperature: flux <-> temperature"
+
+
+class CurrencyEquivalence(Equivalence):
+    """
+    Retrieves the exchange rate between two currencies using
+    the :class:`forex-python` library.
+    """
+    type_name = "currency"
+    _dims = (currency)
+
+    def _convert(self, x, new_dims):
+        from forex_python.converter import (get_currency_code_from_symbol,
+                                            get_rate,
+                                            convert)
+        x_symbol = repr(x.units)
+        x_code = get_currency_code_from_symbol(x_symbol)
+
+        dest_symbol = repr(new_dims)
+        if dest_symbol == "$":
+            dest_code = "USD"
+        else:
+            dest_code = get_currency_code_from_symbol(dest_symbol)
+
+        convert(x_code, dest_code, x.to_value())
+        
+

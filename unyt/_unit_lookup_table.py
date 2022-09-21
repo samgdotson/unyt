@@ -16,6 +16,7 @@ The default unit symbol lookup table.
 from collections import OrderedDict, defaultdict
 
 import numpy as np
+from forex_python.converter import get_symbol
 
 from unyt import dimensions
 from unyt._physical_ratios import (
@@ -90,11 +91,6 @@ default_unit_symbol_lut = OrderedDict(
         ("A", (1.0, dimensions.current_mks, 0.0, r"\rm{A}", True)),
         ("cd", (1.0, dimensions.luminous_intensity, 0.0, r"\rm{cd}", True)),
         ("mol", (1.0 / amu_grams, dimensions.dimensionless, 0.0, r"\rm{mol}", True)),
-        ("$", (1.0, dimensions.currency, 0.0, r"\$", False)),
-        (
-            "¢",
-            (dollars_per_cent, dimensions.currency, 0.0, r"\textcent", False),
-        ),  # ('CENT SIGN' UxA2)
         # some cgs
         ("dyn", (1.0e-5, dimensions.force, 0.0, r"\rm{dyn}", True)),
         ("erg", (1.0e-7, dimensions.energy, 0.0, r"\rm{erg}", True)),
@@ -379,6 +375,15 @@ default_unit_symbol_lut = OrderedDict(
         # logarithmic units
         ("B", (neper_per_bel, dimensions.logarithmic, 0.0, r"\rm{B}", True)),
         ("Np", (1.0, dimensions.logarithmic, 0.0, r"\rm{Np}", True)),
+        # currency units
+        ("$", (1.0, dimensions.currency, 0.0, r"\$", False)),
+        (
+            "¢",
+            (dollars_per_cent, dimensions.currency, 0.0, r"\textcent", False),
+        ),  # ('CENT SIGN' UxA2)
+        (get_symbol("EUR"), (1.0, dimensions.currency, 0.0, r"\texteuro", False)),
+        (get_symbol("GBP"), (1.0, dimensions.currency, 0.0, r"\textsterling", False)),
+        (get_symbol("JPY"), (1.0, dimensions.currency, 0.0, r"\textyen", False)),
     ]
 )
 
@@ -512,8 +517,12 @@ default_unit_name_alternatives = OrderedDict(
         ("A", ("ampere", "amp", "Amp")),
         ("cd", ("candela",)),
         ("mol", ("mole",)),
-        ("$", ("dollars", "dollar")),
+        # some currencies
+        ("$", ("dollars", "dollar", "USD", "usd")),
         ("¢", ("cent", "cents")),
+        ("£", ("pounds", "sterling", "GBP", "gbp")),
+        ("€", ("euros", "euro", "EUR", "eur")),
+        ("¥", ("yen", "Yen", "JPY", "jpy")),
         # some cgs
         ("dyn", ("dyne",)),
         ("erg", ("ergs",)),
