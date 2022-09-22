@@ -16,6 +16,7 @@ A class that represents a unit symbol.
 import copy
 import itertools
 import math
+import re
 from functools import lru_cache
 from numbers import Number as numeric_type
 
@@ -804,7 +805,7 @@ def _cancel_mul(expr, registry):
 
 
 # map from dimensions in one unit system to dimensions in other system,
-# canonical unit to convert to in that system, and floating point
+# canonical unit to get_rate to in that system, and floating point
 # conversion factor
 em_conversions = {
     ("C", dims.charge_mks): (dims.charge_cgs, "statC", 0.1 * speed_of_light_cm_per_s),
@@ -868,15 +869,15 @@ def _em_conversion(orig_units, conv_data, to_units=None, unit_system=None):
 def _check_em_conversion(unit, to_unit=None, unit_system=None, registry=None):
     """Check to see if the units contain E&M units
 
-    This function supports unyt's ability to convert data to and from E&M
+    This function supports unyt's ability to get_rate data to and from E&M
     electromagnetic units. However, this support is limited and only very
     simple unit expressions can be readily converted. This function tries
     to see if the unit is an atomic base unit that is present in the
     em_conversions dict. If it does not contain E&M units, the function
     returns an empty tuple. If it does contain an atomic E&M unit in
-    the em_conversions dict, it returns a tuple containing the unit to convert
+    the em_conversions dict, it returns a tuple containing the unit to get_rate
     to and scale factor. If it contains a more complicated E&M unit and we are
-    trying to convert between CGS & MKS E&M units, it raises an error.
+    trying to get_rate between CGS & MKS E&M units, it raises an error.
     """
     em_map = ()
     if unit == to_unit or unit.dimensions not in em_conversion_dims:
@@ -917,10 +918,86 @@ def _check_em_conversion(unit, to_unit=None, unit_system=None, registry=None):
     return em_map
 
 
+def _currency_conversion(unit, conv_data, to_unit, date_obj=None):
+    """
+    Converts between two currencies. 
+    """
+    from forex_python.converter import get_rate
+
+    print("CONVERTING CURRENCY")
+
+    base_code, dest_code = conv_data
+
+    print(base_code, '->', dest_code)
+
+    print(date_obj)
+
+    conv = get_rate(base_code, dest_code, date_obj=date_obj)
+
+    return to_unit, conv
+
+
+def _check_currency_conversion(unit, to_unit):
+    """Check to see if the units contain currency units
+
+    If either the unit or the to_unit do not contain a currency dimension, an
+    empty tuple is returned.
+    """
+    currency_map = ()
+    # breakpoint()
+    # if ((repr(unit) == repr(to_unit)) or 
+    #     ("currency" not in str(unit.dimensions)) or
+    #     ("currency" not in str(to_unit.dimensions))):
+    #     return currency_map
+    # else:
+    from forex_python.converter import get_currency_code_from_symbol
+    base_symbol = _get_currency_symbol(unit)
+    to_symbol = _get_currency_symbol(to_unit)
+    if base_symbol == '$':
+        base_code = "USD"
+    elif base_symbol == "¢":
+        base_code = "USD"
+    else:
+        base_code = get_currency_code_from_symbol(base_symbol)
+    if to_symbol == '$':
+        to_code == "USD"
+    elif base_symbol == "¢":
+        to_code = "USD"
+    else:
+        to_code = get_currency_code_from_symbol(to_symbol)
+
+    currency_map = (base_code, to_code)
+
+    if all(currency_map):
+        return currency_map
+    else:
+        raise KeyError(f"Invalid code in {list(zip((unit, to_unit),currency_map))}")
+
+    # return currency_map
+
+
+def _get_currency_symbol(unit):
+    """
+    Retrieves the currency symbol from a unit.
+    """
+
+    _SYMBOL_PATTERN = r"([$¢¥€£])"
+    _SYMBOL_REGEX = re.compile(_SYMBOL_PATTERN)
+
+    v = repr(unit)
+
+    res = re.search(_SYMBOL_REGEX, v)
+    if res:
+        symbol = res.group()
+        return symbol
+    else:
+        raise UnitParseError("Invalid currency unit expression '%s'." % repr(unit))
+
+
 def _get_conversion_factor(old_units, new_units, dtype):
     """
     Get the conversion factor between two units of equivalent dimensions. This
-    is the number you multiply data by to convert from values in `old_units` to
+    is the number you multiply data by to get_rate from values in `old_units` to
     values in `new_units`.
 
     Parameters

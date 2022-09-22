@@ -131,7 +131,7 @@ from unyt.exceptions import (
     UnitOperationError,
     UnitsNotReducible,
 )
-from unyt.unit_object import Unit, _check_em_conversion, _em_conversion
+from unyt.unit_object import Unit, _check_em_conversion, _em_conversion, _check_currency_conversion, _currency_conversion, _get_currency_symbol
 from unyt.unit_registry import (
     UnitRegistry,
     _correct_old_unit_registry,
@@ -856,13 +856,23 @@ class unyt_array(np.ndarray):
         """
         units = _sanitize_units_convert(units, self.units.registry)
         if equivalence is None:
+            print("HELLO WORLD")
             conv_data = _check_em_conversion(
                 self.units, units, registry=self.units.registry
             )
+            currency_data = _check_currency_conversion(self.units, units)
+            # breakpoint()
             if any(conv_data):
                 new_units, (conversion_factor, offset) = _em_conversion(
                     self.units, conv_data, units
                 )
+                offset = 0
+            elif any(currency_data):
+                try:
+                    date = kwargs['date']
+                except KeyError:
+                    date = None
+                new_units, conversion_factor = _currency_conversion(self.units, currency_data, units, date_obj=date)
                 offset = 0
             else:
                 new_units = units
