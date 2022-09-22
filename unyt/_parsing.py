@@ -19,6 +19,8 @@ import token
 from sympy import Basic, Float, Integer, Rational, Symbol, sqrt
 from sympy.parsing.sympy_parser import auto_number, parse_expr, rationalize
 
+from forex_python.converter import get_symbol
+
 from unyt._unit_lookup_table import inv_name_alternatives
 from unyt.exceptions import UnitParseError
 
@@ -91,6 +93,9 @@ def parse_unyt_expr(unit_expr):
     unit_expr = unit_expr.replace("°", "deg")
     unit_expr = unit_expr.replace("$", "dollars")
     unit_expr = unit_expr.replace("¢", "cents")
+    unit_expr = unit_expr.replace(get_symbol("EUR"), "euros")
+    unit_expr = unit_expr.replace(get_symbol("GBP"), "pounds")
+    unit_expr = unit_expr.replace(get_symbol("JPY"), "yen")
     try:
         unit_expr = parse_expr(
             unit_expr, global_dict=global_dict, transformations=unit_text_transform
